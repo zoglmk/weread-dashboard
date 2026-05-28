@@ -22,9 +22,13 @@
 
 ### 1. 获取微信读书 API Key
 
-本项目使用微信读书 Agent API Gateway，需要申请 API Key（格式：`wrk-xxxxxxxx`）。
+前往微信读书 Skill 开放平台申请：
 
-> API Key 绑定你的微信读书账号，请勿泄露。
+**https://weread.qq.com/r/weread-skills**
+
+登录后可获取 API Key（格式：`wrk-xxxxxxxx`），同时也可以在这里查看和管理其他 Skill 技能。
+
+> API Key 绑定你的微信读书账号，请勿泄露，不要提交到 Git。
 
 ### 2. 安装依赖
 
