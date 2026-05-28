@@ -36,16 +36,27 @@ pip install -r requirements.txt
 
 ## 使用
 
+**Mac / Linux**
 ```bash
-# 设置 API Key（每次启动前执行，或写入 ~/.zshrc / ~/.bashrc）
 export WEREAD_API_KEY=wrk-xxxxxxxx
-
-# 启动服务
 python3 server.py
-
-# 打开浏览器访问
-open http://localhost:8000
 ```
+
+**Windows（CMD）**
+```cmd
+set WEREAD_API_KEY=wrk-xxxxxxxx
+python server.py
+```
+
+**Windows（PowerShell）**
+```powershell
+$env:WEREAD_API_KEY="wrk-xxxxxxxx"
+python server.py
+```
+
+启动后打开浏览器访问 http://localhost:8000
+
+> 每次打开新终端都需要重新设置环境变量。如需持久化，Mac 写入 `~/.zshrc`，Windows 在系统设置里配置用户环境变量。
 
 ## 技术栈
 
