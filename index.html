@@ -825,16 +825,16 @@ a:hover { color: var(--accent); }
 <!-- ══ TAB: 总览 ══ -->
 <div x-show="!loading && !loadError && tab==='overview'" class="fu">
 
-  <!-- 英雄区 -->
+  <!-- 英雄区：用总计大数字做视觉锚点 -->
   <div class="hero-section">
-    <div class="hero-eyebrow">今年，你已经读了</div>
+    <div class="hero-eyebrow">至今，你已经读了</div>
     <div>
-      <span class="hero-num" x-text="fmt.hours(stats?.totalReadTime)"></span>
+      <span class="hero-num" x-text="fmt.hours(statsAll?.overall?.totalReadTime)"></span>
       <span class="hero-unit">小时</span>
     </div>
     <div class="hero-divider"></div>
     <div class="hero-sub">
-      <span x-text="stats?.readDays || '—'"></span> 天有阅读
+      <span x-text="statsAll?.overall?.readDays || '—'"></span> 天有阅读
       &ensp;·&ensp;
       <span x-text="shelf.length"></span> 本书架
       &ensp;·&ensp;
@@ -842,24 +842,43 @@ a:hover { color: var(--accent); }
     </div>
   </div>
 
-  <!-- 统计卡片 -->
+  <!-- 四维度对比卡片 -->
   <div class="container">
     <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-14">
+      <template x-for="m in [
+        {key:'weekly', label:'本周'},
+        {key:'monthly', label:'本月'},
+        {key:'annually', label:'今年'},
+        {key:'overall', label:'累计'}
+      ]" :key="m.key">
+        <div class="stat-card">
+          <div style="font-size:.7rem; letter-spacing:.08em; text-transform:uppercase; color:var(--dim); margin-bottom:.5rem;" x-text="m.label"></div>
+          <div class="stat-num" x-text="fmt.hours(statsAll?.[m.key]?.totalReadTime)"></div>
+          <div class="stat-label">小时</div>
+          <div style="margin-top:.625rem; font-size:.72rem; color:var(--text-3, var(--dim));">
+            <span x-text="statsAll?.[m.key]?.readDays || 0"></span> 天
+          </div>
+        </div>
+      </template>
+    </div>
+
+    <!-- 书架 / 笔记 / 偏好 -->
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-14">
       <div class="stat-card fu fu-1">
-        <div class="stat-num" x-text="fmt.hours(stats?.totalReadTime)"></div>
-        <div class="stat-label">今年阅读 / 小时</div>
-      </div>
-      <div class="stat-card fu fu-2">
-        <div class="stat-num" x-text="stats?.readDays || '—'"></div>
-        <div class="stat-label">阅读天数</div>
-      </div>
-      <div class="stat-card fu fu-3">
         <div class="stat-num" x-text="shelf.length"></div>
         <div class="stat-label">书架藏书</div>
       </div>
+      <div class="stat-card fu fu-2">
+        <div class="stat-num" x-text="totalNotes"></div>
+        <div class="stat-label">笔记划线</div>
+      </div>
+      <div class="stat-card fu fu-3">
+        <div class="stat-num" x-text="notebooks.length"></div>
+        <div class="stat-label">有笔记的书</div>
+      </div>
       <div class="stat-card fu fu-4">
-        <div class="stat-num" style="font-size:2rem;" x-text="stats?.preferCategoryWord || notebooks[0]?.book?.categories?.[0]?.title?.split('-')[0] || '—'"></div>
-        <div class="stat-label">偏好分类</div>
+        <div class="stat-num" style="font-size:1.75rem;" x-text="statsAll?.annually?.preferCategoryWord || '—'"></div>
+        <div class="stat-label">今年偏好</div>
       </div>
     </div>
 
@@ -1342,7 +1361,8 @@ function weread() {
 
     // 数据
     shelf: [],
-    stats: null,
+    stats: null,       // 今年（向后兼容）
+    statsAll: null,    // 四维度 {weekly, monthly, annually, overall}
     notebooks: [],
 
     // 状态
@@ -1392,7 +1412,7 @@ function weread() {
     _bubbleTimer: null,
 
     // 缓存配置
-    CACHE_KEY: 'wr-data-v3',
+    CACHE_KEY: 'wr-data-v4',
     CACHE_TTL: 24 * 60 * 60 * 1000,
 
     // ── 初始化 ──
@@ -1425,6 +1445,7 @@ function weread() {
         if (Date.now() - (d.ts || 0) > this.CACHE_TTL) return false
         this.shelf     = d.shelf     || []
         this.stats     = d.stats     || null
+        this.statsAll  = d.statsAll  || null
         this.notebooks = d.notebooks || []
         if (d.allCards?.length) { this.allCards = d.allCards; this.cardsLoaded = true }
         return true
@@ -1435,7 +1456,7 @@ function weread() {
       try {
         localStorage.setItem(this.CACHE_KEY, JSON.stringify({
           ts: Date.now(),
-          shelf: this.shelf, stats: this.stats,
+          shelf: this.shelf, stats: this.stats, statsAll: this.statsAll,
           notebooks: this.notebooks, allCards: this.allCards
         }))
       } catch (_) {}
@@ -1492,8 +1513,14 @@ function weread() {
     },
 
     async loadStats() {
-      const d = await this.api({ api_name: '/readdata/detail', mode: 'annually' })
-      this.stats = d
+      const [weekly, monthly, annually, overall] = await Promise.all([
+        this.api({ api_name: '/readdata/detail', mode: 'weekly'   }).catch(() => ({})),
+        this.api({ api_name: '/readdata/detail', mode: 'monthly'  }).catch(() => ({})),
+        this.api({ api_name: '/readdata/detail', mode: 'annually' }).catch(() => ({})),
+        this.api({ api_name: '/readdata/detail', mode: 'overall'  }).catch(() => ({})),
+      ])
+      this.statsAll = { weekly, monthly, annually, overall }
+      this.stats = annually  // 向后兼容（偏好分类等字段）
     },
 
     async loadNotebooks() {
@@ -1721,8 +1748,12 @@ function weread() {
           api_name: '/store/search', keyword: this.q, scope: 10, count: 24
         })
         this.results = (d.results || [])
-          .filter(r => r.bookInfo)
-          .map(r => r.bookInfo)
+          .flatMap(group => group.books || [])
+          .filter(item => item.bookInfo)
+          .map(item => ({
+            ...item.bookInfo,
+            cover: (item.bookInfo.cover || '').replace('/s_', '/t6_')
+          }))
       } catch (_) {}
       finally { this.searching = false }
     },
