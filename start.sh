@@ -8,5 +8,8 @@ if [ ! -f ".env" ]; then
   exit 1
 fi
 
-echo "书房启动中..."
+echo "检查依赖..."
+pip3 install -q -r requirements.txt
+
+echo "书房启动中... 请打开浏览器访问 http://localhost:8000"
 python3 server.py
