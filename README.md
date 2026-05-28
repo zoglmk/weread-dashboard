@@ -34,29 +34,30 @@ pip install -r requirements.txt
 
 需要 Python 3.8+。
 
-## 使用
+### 3. 配置 API Key（一次性）
+
+```bash
+cp .env.example .env
+# 编辑 .env，将 wrk-xxxxxxxx 替换为你的真实 API Key
+```
+
+## 启动
 
 **Mac / Linux**
 ```bash
-export WEREAD_API_KEY=wrk-xxxxxxxx
-python3 server.py
+bash start.sh
 ```
 
-**Windows（CMD）**
+**Windows**
+
+双击 `start.bat`，或在终端执行：
 ```cmd
-set WEREAD_API_KEY=wrk-xxxxxxxx
-python server.py
-```
-
-**Windows（PowerShell）**
-```powershell
-$env:WEREAD_API_KEY="wrk-xxxxxxxx"
-python server.py
+start.bat
 ```
 
 启动后打开浏览器访问 http://localhost:8000
 
-> 每次打开新终端都需要重新设置环境变量。如需持久化，Mac 写入 `~/.zshrc`，Windows 在系统设置里配置用户环境变量。
+> API Key 只需在 `.env` 里配置一次，之后每次直接运行启动脚本即可。`.env` 文件已被 `.gitignore` 排除，不会被提交到 Git。
 
 ## 技术栈
 

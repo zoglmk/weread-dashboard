@@ -1159,6 +1159,9 @@ a:hover { color: var(--accent); }
       <button class="dtab" :class="{active: dtab==='rv'}" @click="dtab='rv'">
         想法 <span style="font-size:.65rem; color:var(--dim); margin-left:.25rem;" x-text="thoughts.length > 0 ? `(${thoughts.length})` : ''"></span>
       </button>
+      <button class="dtab" :class="{active: dtab==='pr'}" @click="loadPublicReviews()">
+        书评 <span style="font-size:.65rem; color:var(--dim); margin-left:.25rem;" x-text="publicReviews.length > 0 ? `(${publicReviews.length})` : ''"></span>
+      </button>
     </div>
 
     <!-- 加载中 -->
@@ -1198,6 +1201,51 @@ a:hover { color: var(--accent); }
           <span style="font-size:.68rem; color:var(--dim); margin-top:.35rem; display:block;" x-text="fmt.date(rv.review?.createTime)"></span>
         </div>
       </template>
+    </div>
+
+    <!-- 书评（网友公开点评） -->
+    <div x-show="dtab==='pr'">
+      <!-- 加载中 -->
+      <div x-show="loadingReviews" style="padding:2rem 0;">
+        <div class="skel" style="height:5rem; border-radius:6px; margin-bottom:1rem;"></div>
+        <div class="skel" style="height:5rem; border-radius:6px; margin-bottom:1rem;"></div>
+        <div class="skel" style="height:5rem; border-radius:6px;"></div>
+      </div>
+      <!-- 空状态 -->
+      <div x-show="!loadingReviews && publicReviews.length===0" class="empty" style="padding:2.5rem 0;">暂无书评</div>
+      <!-- 书评列表：实际路径是 item.review.review.* -->
+      <template x-for="item in publicReviews" :key="item.review?.reviewId">
+        <div style="margin-bottom:1.25rem; padding-bottom:1.25rem; border-bottom:1px solid var(--border);">
+          <!-- 作者 + 评分 + 点赞 -->
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:.5rem;">
+            <span style="font-size:.78rem; font-weight:500; color:var(--text);"
+                  x-text="item.review?.review?.author?.name || '读者'"></span>
+            <div style="display:flex; align-items:center; gap:.75rem;">
+              <!-- star 是 0-100 制，转成 1-5 颗星 -->
+              <span x-show="item.review?.review?.star > 0" style="font-size:.7rem; color:var(--accent);"
+                    x-text="'★'.repeat(Math.round((item.review?.review?.star||0)/20)) + '☆'.repeat(5-Math.round((item.review?.review?.star||0)/20))"></span>
+              <span x-show="item.review?.likesCount > 0" style="font-size:.68rem; color:var(--dim);"
+                    x-text="`👍 ${item.review?.likesCount}`"></span>
+            </div>
+          </div>
+          <!-- 正文 -->
+          <p style="font-size:.84rem; color:var(--text); line-height:1.75;
+                    display:-webkit-box; -webkit-line-clamp:8; -webkit-box-orient:vertical; overflow:hidden;"
+             x-text="item.review?.review?.content"></p>
+          <!-- 时间 -->
+          <span style="font-size:.68rem; color:var(--dim); margin-top:.4rem; display:block;"
+                x-text="fmt.date(item.review?.review?.createTime)"></span>
+        </div>
+      </template>
+      <!-- 加载更多 -->
+      <button x-show="!loadingReviews && reviewsHasMore"
+              @click="loadMoreReviews()"
+              style="width:100%; padding:.625rem; font-size:.8rem; color:var(--sub); background:transparent;
+                     border:1px solid var(--border); border-radius:7px; cursor:pointer; transition:all .2s; font-family:inherit;"
+              onmouseover="this.style.borderColor='var(--accent)';this.style.color='var(--accent)'"
+              onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--sub)'">
+        加载更多
+      </button>
     </div>
 
   </div>
@@ -1311,6 +1359,10 @@ function weread() {
     chapters: [],
     thoughts: [],
     dtab: 'hl',
+    publicReviews: [],
+    loadingReviews: false,
+    reviewsHasMore: false,
+    reviewsSynckey: 0,
 
     // 搜索
     q: '',
@@ -1586,6 +1638,9 @@ function weread() {
       this.highlights = []
       this.chapters = []
       this.thoughts = []
+      this.publicReviews = []
+      this.reviewsHasMore = false
+      this.reviewsSynckey = 0
       this.dtab = 'hl'
 
       try {
@@ -1610,6 +1665,39 @@ function weread() {
         if (this.highlights.length === 0 && this.thoughts.length > 0) this.dtab = 'rv'
       } catch (_) { /* 无笔记属正常 */ }
       finally { this.drawerLoading = false }
+    },
+
+    async loadPublicReviews() {
+      this.dtab = 'pr'
+      if (this.publicReviews.length > 0) return   // 已加载过，不重复请求
+      this.loadingReviews = true
+      try {
+        const d = await this.api({
+          api_name: '/review/list', bookId: this.activeBook.bookId,
+          reviewListType: 1, count: 15, maxIdx: 0, synckey: 0
+        })
+        this.publicReviews = d.reviews || []
+        this.reviewsHasMore = !!d.reviewsHasMore
+        this.reviewsSynckey = d.synckey || 0
+      } catch (e) { console.warn('书评加载失败', e) }
+      finally { this.loadingReviews = false }
+    },
+
+    async loadMoreReviews() {
+      if (this.loadingReviews || !this.reviewsHasMore) return
+      this.loadingReviews = true
+      try {
+        const d = await this.api({
+          api_name: '/review/list', bookId: this.activeBook.bookId,
+          reviewListType: 1, count: 15,
+          maxIdx: this.publicReviews.length,
+          synckey: this.reviewsSynckey
+        })
+        this.publicReviews = [...this.publicReviews, ...(d.reviews || [])]
+        this.reviewsHasMore = !!d.reviewsHasMore
+        this.reviewsSynckey = d.synckey || 0
+      } catch (e) { console.warn('加载更多书评失败', e) }
+      finally { this.loadingReviews = false }
     },
 
     closeDrawer() {
