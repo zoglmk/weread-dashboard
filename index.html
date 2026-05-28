@@ -1,0 +1,1889 @@
+<!DOCTYPE html>
+<html lang="zh" class="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>书房</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;1,9..144,300;1,9..144,400;1,9..144,600&family=Instrument+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+
+<script>
+  // 避免主题闪烁
+  const t = localStorage.getItem('wr-theme') || 'dark';
+  document.documentElement.className = t;
+</script>
+
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = {
+    darkMode: 'class',
+    theme: {
+      extend: {
+        fontFamily: {
+          display: ['Fraunces', 'Georgia', 'serif'],
+          sans: ['Instrument Sans', 'system-ui', 'sans-serif'],
+        }
+      }
+    }
+  }
+</script>
+
+<style>
+/* ── 主题变量 ── */
+:root {
+  --bg:           #0C0907;
+  --bg-alt:       #131009;
+  --surf:         #1A1510;
+  --surf-hi:      #241D15;
+  --surf-top:     #2D2518;
+  --border:       #332B1E;
+  --text:         #EDE0C6;
+  --sub:          #9B8A72;
+  --dim:          #5A4E3E;
+  --accent:       #C47B2E;
+  --accent-hi:    #DE9540;
+  --accent-bg:    rgba(196,123,46,.13);
+  --shadow:       rgba(0,0,0,.55);
+}
+.light {
+  --bg:           #F6F0E5;
+  --bg-alt:       #EEE6D8;
+  --surf:         #FDF9F2;
+  --surf-hi:      #F0E8DA;
+  --surf-top:     #E8DDD0;
+  --border:       #D5C9B2;
+  --text:         #1C1610;
+  --sub:          #7A6A54;
+  --dim:          #B0A090;
+  --accent:       #B87028;
+  --accent-hi:    #CC8833;
+  --accent-bg:    rgba(184,112,40,.10);
+  --shadow:       rgba(0,0,0,.12);
+}
+
+/* ── 基础 ── */
+*, *::before, *::after { box-sizing: border-box; }
+html, body {
+  margin: 0; padding: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Instrument Sans', system-ui, sans-serif;
+  min-height: 100vh;
+}
+
+/* 纸纹叠层 */
+body::after {
+  content: '';
+  position: fixed; inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E");
+  opacity: .028;
+  pointer-events: none;
+  z-index: 9998;
+}
+
+/* ── 滚动条 ── */
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+/* ── Header ── */
+.header {
+  position: fixed; top: 0; left: 0; right: 0;
+  height: 56px; z-index: 30;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 2rem;
+  border-bottom: 1px solid var(--border);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+}
+.dark .header  { background: rgba(12,9,7,.82); }
+.light .header { background: rgba(246,240,229,.88); }
+
+.logo {
+  font-family: 'Fraunces', Georgia, serif;
+  font-style: italic;
+  font-weight: 300;
+  font-size: 1.375rem;
+  letter-spacing: -.01em;
+  color: var(--accent);
+  user-select: none;
+}
+.logo-dot { color: var(--dim); font-style: normal; }
+
+/* ── 导航 tab ── */
+.nav-tabs { display: flex; gap: 2rem; }
+.nav-tab {
+  font-size: .8125rem;
+  letter-spacing: .04em;
+  color: var(--sub);
+  cursor: pointer;
+  border: none; background: none; padding: .25rem 0;
+  position: relative;
+  transition: color .2s;
+}
+.nav-tab:hover { color: var(--text); }
+.nav-tab.active { color: var(--text); }
+.nav-tab::after {
+  content: ''; position: absolute; left: 0; right: 0; bottom: -3px;
+  height: 1.5px; background: var(--accent);
+  transform: scaleX(0); transform-origin: left;
+  transition: transform .25s cubic-bezier(.4,0,.2,1);
+}
+.nav-tab.active::after { transform: scaleX(1); }
+
+/* ── 主内容 ── */
+.main { padding-top: 56px; }
+.container { max-width: 1200px; margin: 0 auto; padding: 0 2rem; }
+
+/* ── 书籍卡片 ── */
+.book-card {
+  cursor: pointer;
+  transition: transform .3s cubic-bezier(.34,1.56,.64,1);
+}
+.book-card:hover { transform: translateY(-7px); }
+
+.book-cover {
+  position: relative;
+  aspect-ratio: 2/3;
+  border-radius: 3px;
+  overflow: hidden;
+  background: var(--surf-hi);
+  box-shadow: var(--shadow-book, 3px 5px 16px var(--shadow)),
+              inset -1px 0 0 rgba(255,255,255,.04);
+}
+.dark  .book-cover { box-shadow: 3px 6px 18px rgba(0,0,0,.65), inset -1px 0 0 rgba(255,255,255,.04); }
+.light .book-cover { box-shadow: 2px 4px 12px rgba(0,0,0,.12), inset -1px 0 0 rgba(255,255,255,.5); }
+
+.book-cover img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+.cover-fallback {
+  position: absolute; inset: 0;
+  display: none;
+  align-items: center; justify-content: center;
+  padding: .75rem;
+  background: var(--surf-hi);
+}
+.cover-fallback.show { display: flex; }
+.cover-fallback span {
+  font-family: 'Fraunces', serif;
+  font-style: italic;
+  font-size: .7rem;
+  line-height: 1.5;
+  text-align: center;
+  color: var(--dim);
+  display: -webkit-box;
+  -webkit-line-clamp: 5;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* 进度线 */
+.progress-bar {
+  position: absolute; bottom: 0; left: 0; right: 0;
+  height: 2px; background: var(--border);
+}
+.progress-fill { height: 100%; background: var(--accent); transition: width .6s ease; }
+
+/* ── 统计卡 ── */
+.stat-card {
+  background: var(--surf);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 1.5rem 1.25rem;
+}
+.stat-num {
+  font-family: 'Fraunces', Georgia, serif;
+  font-style: italic;
+  font-weight: 400;
+  font-size: 3.25rem;
+  line-height: 1;
+  color: var(--accent);
+  letter-spacing: -.02em;
+}
+.stat-label {
+  font-size: .7rem;
+  letter-spacing: .09em;
+  text-transform: uppercase;
+  color: var(--dim);
+  margin-top: .5rem;
+}
+
+/* ── 划线引用 ── */
+.hl-quote {
+  padding: .875rem 1rem .875rem 1.125rem;
+  border-left: 2px solid var(--accent);
+  background: var(--accent-bg);
+  border-radius: 0 6px 6px 0;
+  margin: 0;
+}
+.hl-text {
+  font-family: 'Fraunces', Georgia, serif;
+  font-style: italic;
+  font-size: .9375rem;
+  line-height: 1.8;
+  color: var(--text);
+}
+.hl-meta {
+  font-size: .72rem;
+  color: var(--dim);
+  margin-top: .5rem;
+  display: block;
+}
+
+/* 想法气泡 */
+.thought {
+  margin-top: .625rem;
+  padding: .625rem .875rem;
+  background: var(--surf-top);
+  border-radius: 6px;
+  font-size: .84rem;
+  line-height: 1.65;
+  color: var(--sub);
+}
+
+/* ── 章节分隔 ── */
+.ch-divider {
+  display: flex; align-items: center; gap: .875rem;
+  margin: 1.75rem 0 1rem;
+}
+.ch-divider::before, .ch-divider::after {
+  content: ''; flex: 1; height: 1px; background: var(--border);
+}
+.ch-divider span {
+  font-size: .7rem; letter-spacing: .07em;
+  color: var(--dim); white-space: nowrap;
+}
+
+/* ── 笔记行 ── */
+.nb-row {
+  display: flex; align-items: center; gap: 1rem;
+  padding: 1rem 0;
+  border-bottom: 1px solid var(--border);
+  cursor: pointer;
+  transition: padding-left .2s ease;
+}
+.nb-row:hover { padding-left: .5rem; }
+.nb-row:last-child { border-bottom: none; }
+
+/* ── Filter chips ── */
+.chip {
+  padding: .3rem .9rem;
+  border-radius: 9999px;
+  font-size: .78rem;
+  border: 1px solid var(--border);
+  color: var(--sub);
+  background: transparent;
+  cursor: pointer;
+  transition: all .18s;
+  white-space: nowrap;
+}
+.chip:hover  { border-color: var(--accent); color: var(--accent); }
+.chip.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+
+/* ── 搜索输入框 ── */
+.search-box {
+  width: 100%;
+  background: var(--surf);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 1rem 3.5rem 1rem 1.25rem;
+  font-family: inherit;
+  font-size: 1rem;
+  color: var(--text);
+  outline: none;
+  transition: border-color .2s;
+}
+.search-box:focus { border-color: var(--accent); }
+.search-box::placeholder { color: var(--dim); }
+
+/* ── 抽屉 ── */
+.drawer-mask {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,.5);
+  z-index: 40;
+  opacity: 0; pointer-events: none;
+  transition: opacity .3s;
+}
+.drawer-mask.open { opacity: 1; pointer-events: all; }
+
+.drawer {
+  position: fixed; top: 0; right: 0; bottom: 0;
+  width: min(560px, 100vw);
+  background: var(--surf);
+  border-left: 1px solid var(--border);
+  z-index: 50;
+  transform: translateX(100%);
+  transition: transform .35s cubic-bezier(.4,0,.2,1);
+  overflow-y: auto;
+}
+.drawer.open { transform: translateX(0); }
+
+/* ── 骨架屏 ── */
+.skel {
+  background: linear-gradient(90deg, var(--surf) 25%, var(--surf-hi) 50%, var(--surf) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: 4px;
+}
+@keyframes shimmer {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* ── 入场动画 ── */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(14px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.fu { animation: fadeUp .45s ease both; }
+.fu-1 { animation-delay: .06s; }
+.fu-2 { animation-delay: .12s; }
+.fu-3 { animation-delay: .18s; }
+.fu-4 { animation-delay: .24s; }
+
+/* ── 主题切换按钮 ── */
+.theme-btn {
+  width: 36px; height: 36px;
+  display: flex; align-items: center; justify-content: center;
+  border-radius: 8px; border: 1px solid var(--border);
+  background: transparent; cursor: pointer; color: var(--sub);
+  transition: all .2s;
+}
+.theme-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+/* ── 标签页(抽屉内) ── */
+.dtab {
+  font-size: .8125rem; color: var(--sub); cursor: pointer;
+  padding: .375rem 0; border: none; background: none;
+  position: relative; transition: color .2s;
+}
+.dtab:hover { color: var(--text); }
+.dtab.active { color: var(--text); }
+.dtab::after {
+  content: ''; position: absolute; left: 0; right: 0; bottom: -1px;
+  height: 1.5px; background: var(--accent);
+  transform: scaleX(0); transform-origin: left;
+  transition: transform .25s;
+}
+.dtab.active::after { transform: scaleX(1); }
+
+/* ── 评分星 ── */
+.rating { color: var(--accent); font-size: .7rem; }
+
+/* 小徽章 */
+.badge {
+  display: inline-flex; align-items: center;
+  font-size: .65rem; padding: .15rem .45rem;
+  border-radius: 3px; font-weight: 500; letter-spacing: .03em;
+}
+.badge-done { background: var(--accent); color: #fff; }
+.badge-priv { background: var(--surf-top); color: var(--dim); }
+
+/* 超链接样式 */
+a { color: inherit; text-decoration: none; }
+a:hover { color: var(--accent); }
+
+/* 概览页大数字标题 */
+.hero-section {
+  padding: 4rem 0 3rem;
+  text-align: center;
+}
+.hero-eyebrow {
+  font-size: .78rem; letter-spacing: .12em; text-transform: uppercase;
+  color: var(--dim); margin-bottom: 1rem;
+}
+.hero-num {
+  font-family: 'Fraunces', serif;
+  font-style: italic;
+  font-size: clamp(5rem, 14vw, 9rem);
+  font-weight: 300;
+  line-height: 1;
+  color: var(--accent);
+  letter-spacing: -.03em;
+}
+.hero-unit {
+  font-family: 'Fraunces', serif;
+  font-style: italic;
+  font-size: clamp(1.25rem, 3vw, 1.875rem);
+  color: var(--sub);
+  margin-left: .5rem;
+}
+.hero-divider {
+  width: 40px; height: 1px;
+  background: var(--border); margin: 1.5rem auto;
+}
+.hero-sub { font-size: .875rem; color: var(--sub); letter-spacing: .04em; }
+
+/* 阅读进度条（书籍详情） */
+.read-prog-track {
+  height: 3px; background: var(--border); border-radius: 2px; overflow: hidden;
+}
+.read-prog-fill { height: 100%; background: var(--accent); border-radius: 2px; }
+
+/* 空状态 */
+.empty {
+  text-align: center; padding: 5rem 2rem;
+  color: var(--dim); font-size: .9rem;
+  font-family: 'Fraunces', serif; font-style: italic;
+}
+
+/* ── 刷新按钮旋转动画 ── */
+@keyframes spin { to { transform: rotate(360deg); } }
+.icon-spin { animation: spin .75s linear infinite; display: inline-block; }
+
+/* ── 3D 浮动动画 ── */
+@keyframes card-drift {
+  0%   { transform: translateY(0px)           translateZ(0px)         rotateX(0deg)              rotateY(0deg); }
+  35%  { transform: translateY(var(--fy))     translateZ(var(--fz))   rotateX(var(--frx))        rotateY(var(--fry)); }
+  65%  { transform: translateY(calc(var(--fy)*-.52)) translateZ(calc(var(--fz)*.32)) rotateX(calc(var(--frx)*-.38)) rotateY(calc(var(--fry)*-.55)); }
+  100% { transform: translateY(0px)           translateZ(0px)         rotateX(0deg)              rotateY(0deg); }
+}
+.card-float-wrap {
+  break-inside: avoid;
+  margin-bottom: 0.25rem;      /* 压缩纵向间距，制造堆叠感 */
+  position: relative;
+  z-index: 1;
+  animation: card-drift var(--dur, 9s) var(--del, 0s) ease-in-out infinite;
+}
+/* hover 时：暂停浮动 + 提到最顶层 */
+.card-float-wrap:has(.note-card:hover) {
+  animation-play-state: paused;
+  z-index: 200;
+}
+
+/* ── 视图切换按钮 ── */
+.view-toggle {
+  display: flex; gap: 2px;
+  background: var(--surf-hi); border-radius: 7px; padding: 2px;
+}
+.view-btn {
+  padding: .3rem .75rem; border-radius: 5px; font-size: .75rem;
+  border: none; background: transparent; color: var(--sub);
+  cursor: pointer; transition: all .18s; letter-spacing: .03em;
+  display: flex; align-items: center; gap: .35rem;
+}
+.view-btn:hover { color: var(--text); }
+.view-btn.active { background: var(--surf-top); color: var(--text); }
+
+/* ── 碎片墙 ── */
+.card-wall {
+  columns: 4 220px;
+  column-gap: 1.5rem;
+  padding: 3.5rem 2rem 2rem;   /* 顶部留足气泡空间 */
+  overflow: visible;
+  perspective: 1400px;
+}
+.note-card {
+  --rot: 0deg;
+  --tx:  0px;
+  cursor: pointer;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--surf);
+  padding: 0 1.125rem 1rem;
+  position: relative;
+  overflow: hidden;
+  transform: rotate(var(--rot)) translateX(var(--tx));
+  transition: transform .32s cubic-bezier(.34,1.56,.64,1), border-color .2s, box-shadow .3s;
+  will-change: transform;
+}
+/* 书色顶线通过 inline style 注入 */
+.note-card-line {
+  height: 2px;
+  margin: 0 -1.125rem 1rem;
+  opacity: .75;
+  transition: opacity .2s;
+  border-radius: 8px 8px 0 0;
+}
+/* hover：保持旋转+偏移，大幅上浮放大，从纸堆中弹出 */
+.note-card:hover {
+  transform: rotate(var(--rot)) translateX(var(--tx)) translateY(-18px) scale(1.06);
+  border-color: var(--accent);
+}
+.dark  .note-card:hover { box-shadow: 0 28px 56px rgba(0,0,0,.78); }
+.light .note-card:hover { box-shadow: 0 16px 44px rgba(0,0,0,.22); }
+.note-card:hover .note-card-line { opacity: 1; }
+
+/* 背景装饰引号（左侧，语义更自然） */
+.note-card::before {
+  content: '\201C';
+  position: absolute;
+  top: -.1rem; left: .5rem;
+  font-size: 5.5rem;
+  font-family: 'Fraunces', serif;
+  font-style: italic;
+  line-height: 1;
+  color: var(--surf-top);
+  pointer-events: none;
+  z-index: 0;
+  transition: color .25s;
+  user-select: none;
+}
+.note-card:hover::before { color: var(--surf-hi); }
+
+.card-text {
+  font-family: 'Fraunces', Georgia, serif;
+  font-style: italic;
+  line-height: 1.8;
+  color: var(--text);
+  position: relative;
+  z-index: 1;
+}
+
+/* ── 聚光灯弹窗 ── */
+.spot-overlay {
+  position: fixed; inset: 0; z-index: 500;
+  display: flex; align-items: center; justify-content: center;
+  background: rgba(0,0,0,.38);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  cursor: pointer;
+}
+.spot-card {
+  width: min(540px, 90vw);
+  background: var(--surf);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 0 2.25rem 2rem;
+  position: relative;
+  overflow: hidden;
+  cursor: default;
+  transform: rotate(var(--rot, 0deg));
+  animation: spot-card-in .6s cubic-bezier(.34,1.56,.64,1) both;
+}
+.dark  .spot-card { box-shadow: 0 50px 90px rgba(0,0,0,.9),  0 0 0 1px var(--accent); }
+.light .spot-card { box-shadow: 0 30px 70px rgba(0,0,0,.28), 0 0 0 1px var(--accent); }
+@keyframes spot-card-in {
+  from { opacity: 0; transform: rotate(var(--rot,0deg)) translateY(70px) scale(.82); }
+  to   { opacity: 1; transform: rotate(var(--rot,0deg)) translateY(0)    scale(1);   }
+}
+.spot-topline { height: 2px; margin: 0 -2.25rem 2rem; }
+.spot-deco {
+  position: absolute; top: -.2rem; left: .75rem;
+  font-family: 'Fraunces', serif; font-style: italic;
+  font-size: 6.5rem; line-height: 1;
+  color: var(--surf-top); pointer-events: none;
+  user-select: none; z-index: 0;
+}
+.spot-text {
+  font-family: 'Fraunces', Georgia, serif;
+  font-style: italic; line-height: 1.75;
+  color: var(--text); position: relative; z-index: 1;
+}
+.spot-footer {
+  margin-top: 1.625rem; padding-top: 1rem;
+  border-top: 1px solid var(--border);
+  display: flex; justify-content: space-between; align-items: flex-end; gap: 1rem;
+}
+.spot-book  { font-family: 'Fraunces', serif; font-size: .9rem; color: var(--text); line-height: 1.35; }
+.spot-ch    { font-size: .72rem; color: var(--dim); margin-top: .2rem; }
+.spot-hint  { font-size: .68rem; color: var(--dim); letter-spacing: .06em; flex-shrink: 0; }
+/* ── 排队气泡（绑定在卡片上，有气泡时提升 z-index） ── */
+.card-float-wrap.has-bubble { z-index: 30; }  /* 让气泡浮在邻近卡片之上 */
+
+.card-bubble {
+  position: absolute;
+  top: -40px; right: 8px;
+  background: var(--surf-hi);
+  border: 1px solid var(--border);
+  border-radius: 24px;
+  padding: .38rem 1rem;
+  color: var(--text);
+  white-space: nowrap;
+  pointer-events: none;
+  box-shadow: 0 4px 14px var(--shadow);
+  animation: bubble-in .45s cubic-bezier(.34,1.56,.64,1) both;
+  z-index: 5;
+}
+.card-bubble::before {
+  content: ''; position: absolute;
+  bottom: -7px; right: 18px;
+  border: 5px solid transparent;
+  border-top-color: var(--border);
+}
+.card-bubble::after {
+  content: ''; position: absolute;
+  bottom: -5px; right: 18px;
+  border: 5px solid transparent;
+  border-top-color: var(--surf-hi);
+}
+
+/* ── 聚光灯卡片上的「上台」气泡 ── */
+.spot-bubble {
+  position: absolute;
+  top: -38px; right: 16px;
+  background: var(--accent);
+  color: #fff;
+  border-radius: 20px;
+  padding: .3rem .85rem;
+  font-size: .78rem;
+  white-space: nowrap;
+  box-shadow: 0 3px 12px rgba(196,123,46,.45);
+  animation: bubble-in .5s cubic-bezier(.34,1.56,.64,1) .35s both;
+}
+.spot-bubble::before {
+  content: ''; position: absolute;
+  bottom: -7px; right: 18px;
+  border: 5px solid transparent;
+  border-top-color: var(--accent);
+}
+
+/* ── 卡片翻转详情弹窗 ── */
+.flip-overlay {
+  position: fixed; inset: 0; z-index: 450;
+  display: flex; align-items: center; justify-content: center;
+  background: rgba(0,0,0,.42);
+  backdrop-filter: blur(5px); -webkit-backdrop-filter: blur(5px);
+  cursor: pointer;
+}
+/* 翻转落下动画：从侧面翻入，像一张牌被翻过来 */
+.flip-scene {
+  width: min(560px, 92vw);
+  cursor: default;
+  perspective: 900px;
+  animation: flip-reveal .55s cubic-bezier(.4,0,.2,1) both;
+}
+@keyframes flip-reveal {
+  0%   { transform: rotateY(-90deg) scale(.85); opacity: 0; }
+  65%  { transform: rotateY(6deg)  scale(1.02); opacity: 1; }
+  100% { transform: rotateY(0deg)  scale(1);    opacity: 1; }
+}
+.flip-card {
+  background: var(--surf);
+  border: 1px solid var(--border);
+  border-radius: 14px; overflow: hidden;
+}
+.dark  .flip-card { box-shadow: 0 40px 80px rgba(0,0,0,.75); }
+.light .flip-card { box-shadow: 0 24px 60px rgba(0,0,0,.22); }
+/* 书籍信息头部 */
+.flip-header {
+  display: flex; align-items: center; gap: 1.25rem;
+  padding: 1.5rem; border-bottom: 1px solid var(--border);
+}
+.flip-cover-img {
+  width: 64px; height: 96px; flex-shrink: 0;
+  position: relative;                          /* 锁定 cover-fallback 的定位上下文 */
+  border-radius: 3px; overflow: hidden; background: var(--surf-hi);
+  box-shadow: 2px 4px 10px var(--shadow);
+}
+.flip-cover-img img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.flip-title { font-family: 'Fraunces', serif; font-size: 1.05rem; line-height: 1.35; color: var(--text); margin-bottom: .3rem; }
+.flip-author { font-size: .78rem; color: var(--sub); margin-bottom: .2rem; }
+.flip-chapter { font-size: .7rem; color: var(--dim); }
+.flip-badge {
+  display: inline-block; margin-top: .5rem; font-size: .65rem;
+  padding: .15rem .5rem; border-radius: 4px; letter-spacing: .04em;
+  background: var(--accent-dim); color: var(--accent); border: 1px solid var(--accent-bg);
+}
+/* 内容区：仅显示当前这条 */
+.flip-body { padding: 1.5rem; }
+.flip-body-abstract {
+  font-size: .72rem; color: var(--sub); font-style: italic;
+  border-left: 2px solid var(--accent); padding-left: .6rem;
+  margin-bottom: .875rem; line-height: 1.55;
+}
+.flip-body-quote {
+  font-family: 'Fraunces', serif; font-style: italic;
+  line-height: 1.8; color: var(--text);
+}
+/* 操作栏 */
+.flip-footer {
+  display: flex; gap: .625rem; justify-content: flex-end;
+  padding: 1rem 1.5rem; border-top: 1px solid var(--border);
+}
+.flip-btn {
+  font-size: .8rem; border-radius: 7px; padding: .45rem .9rem;
+  cursor: pointer; font-family: inherit; transition: all .2s;
+  display: inline-flex; align-items: center; gap: .35rem; border: none;
+}
+.flip-btn-ghost { background: transparent; border: 1px solid var(--border); color: var(--sub); }
+.flip-btn-ghost:hover { border-color: var(--text); color: var(--text); }
+.flip-btn-solid { background: var(--accent); color: #fff; }
+.flip-btn-solid:hover { opacity: .85; }
+
+@keyframes bubble-in {
+  from { opacity: 0; transform: translateY(8px) scale(.72); }
+  to   { opacity: 1; transform: translateY(0)  scale(1); }
+}
+
+/* 倒计时进度条 */
+.spot-prog {
+  position: absolute; bottom: 0; left: 0; right: 0; height: 2px;
+  background: var(--accent); opacity: .55;
+  transform-origin: left;
+  animation: spot-prog-drain 3.5s linear both;
+}
+@keyframes spot-prog-drain { from { transform: scaleX(1) } to { transform: scaleX(0) } }
+
+/* ── 想法卡片 ── */
+.note-card.is-thought { background: var(--accent-dim); }
+.card-abstract {
+  font-size: .7rem; color: var(--sub); font-style: italic;
+  border-left: 2px solid var(--accent); padding-left: .55rem;
+  margin-bottom: .625rem; line-height: 1.55;
+  position: relative; z-index: 1;
+  display: -webkit-box; -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical; overflow: hidden;
+}
+/* 聚光灯弹窗里的引用原文 */
+.spot-abstract {
+  font-size: .8rem; color: var(--sub); font-style: italic;
+  border-left: 2px solid var(--accent); padding-left: .7rem;
+  margin-bottom: 1rem; line-height: 1.6; position: relative; z-index: 1;
+}
+
+/* hover 时淡入的书籍信息（纯 opacity，不改变高度，避免列重排抖动） */
+.card-meta {
+  margin-top: .75rem;
+  padding-top: .625rem;
+  border-top: 1px solid var(--border);
+  opacity: 0;
+  position: relative;
+  z-index: 1;
+  transition: opacity .22s ease;
+}
+.note-card:hover .card-meta { opacity: 1; }
+.card-meta-title {
+  font-size: .75rem; color: var(--text); line-height: 1.3;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.card-meta-sub {
+  font-size: .68rem; color: var(--dim); margin-top: .2rem;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+</style>
+
+<script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+</head>
+
+<body x-data="weread()" x-init="boot()">
+
+<!-- ══════════ HEADER ══════════ -->
+<header class="header">
+  <span class="logo">书房<span class="logo-dot">.</span></span>
+
+  <nav class="nav-tabs">
+    <button class="nav-tab" :class="{active: tab==='overview'}" @click="setTab('overview')">总览</button>
+    <button class="nav-tab" :class="{active: tab==='shelf'}"    @click="setTab('shelf')">书架</button>
+    <button class="nav-tab" :class="{active: tab==='notes'}"    @click="setTab('notes')">笔记</button>
+    <button class="nav-tab" :class="{active: tab==='search'}"   @click="setTab('search')">搜索</button>
+  </nav>
+
+  <div style="display:flex;gap:.5rem;">
+  <button class="theme-btn" @click="forceRefresh()" title="刷新数据" :disabled="refreshing"
+          :style="refreshing ? 'opacity:.5;cursor:not-allowed' : ''">
+    <span :class="refreshing ? 'icon-spin' : ''">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+        <polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/>
+        <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+      </svg>
+    </span>
+  </button>
+  <button class="theme-btn" @click="toggleTheme()" :title="theme==='dark'?'切换亮色':'切换暗色'">
+    <template x-if="theme==='dark'">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/>
+        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+        <line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/>
+        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+      </svg>
+    </template>
+    <template x-if="theme==='light'">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+      </svg>
+    </template>
+  </button>
+  </div>
+</header>
+
+<!-- ══════════ MAIN ══════════ -->
+<main class="main">
+
+<!-- ── 全局加载 ── -->
+<div x-show="loading" class="container" style="padding-top:6rem; text-align:center; color:var(--dim);">
+  <div style="font-family:'Fraunces',serif; font-style:italic; font-size:1.25rem; margin-bottom:2rem;">正在连接书房…</div>
+  <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+    <template x-for="i in [1,2,3,4]">
+      <div class="stat-card"><div class="skel" style="height:3rem; margin-bottom:.75rem;"></div><div class="skel" style="height:.75rem; width:60%;"></div></div>
+    </template>
+  </div>
+  <div class="grid grid-cols-3 md:grid-cols-5 gap-5">
+    <template x-for="i in [1,2,3,4,5]">
+      <div><div class="skel" style="aspect-ratio:2/3; border-radius:3px;"></div><div class="skel" style="height:.7rem; margin-top:.625rem;"></div></div>
+    </template>
+  </div>
+</div>
+
+<!-- ── 错误 ── -->
+<div x-show="!loading && loadError" class="container" style="padding-top:6rem; text-align:center;">
+  <p style="color:var(--sub); font-family:'Fraunces',serif; font-style:italic;" x-text="loadError"></p>
+</div>
+
+<!-- ══ TAB: 总览 ══ -->
+<div x-show="!loading && !loadError && tab==='overview'" class="fu">
+
+  <!-- 英雄区 -->
+  <div class="hero-section">
+    <div class="hero-eyebrow">今年，你已经读了</div>
+    <div>
+      <span class="hero-num" x-text="fmt.hours(stats?.totalReadTime)"></span>
+      <span class="hero-unit">小时</span>
+    </div>
+    <div class="hero-divider"></div>
+    <div class="hero-sub">
+      <span x-text="stats?.readDays || '—'"></span> 天有阅读
+      &ensp;·&ensp;
+      <span x-text="shelf.length"></span> 本书架
+      &ensp;·&ensp;
+      <span x-text="totalNotes"></span> 条笔记
+    </div>
+  </div>
+
+  <!-- 统计卡片 -->
+  <div class="container">
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-14">
+      <div class="stat-card fu fu-1">
+        <div class="stat-num" x-text="fmt.hours(stats?.totalReadTime)"></div>
+        <div class="stat-label">今年阅读 / 小时</div>
+      </div>
+      <div class="stat-card fu fu-2">
+        <div class="stat-num" x-text="stats?.readDays || '—'"></div>
+        <div class="stat-label">阅读天数</div>
+      </div>
+      <div class="stat-card fu fu-3">
+        <div class="stat-num" x-text="shelf.length"></div>
+        <div class="stat-label">书架藏书</div>
+      </div>
+      <div class="stat-card fu fu-4">
+        <div class="stat-num" style="font-size:2rem;" x-text="stats?.preferCategoryWord || notebooks[0]?.book?.categories?.[0]?.title?.split('-')[0] || '—'"></div>
+        <div class="stat-label">偏好分类</div>
+      </div>
+    </div>
+
+    <!-- 最近在读 -->
+    <div class="mb-14">
+      <div style="font-family:'Fraunces',serif; font-size:1.1rem; color:var(--sub); letter-spacing:.04em; margin-bottom:1.25rem; display:flex; align-items:center; gap:.75rem;">
+        最近在读
+        <span style="flex:1; height:1px; background:var(--border); display:block;"></span>
+      </div>
+      <div style="display:flex; gap:1.25rem; overflow-x:auto; padding-bottom:1rem;">
+        <template x-for="book in recentShelf" :key="book.bookId">
+          <div class="book-card" style="flex-shrink:0; width:100px;" @click="openBook(book)">
+            <div class="book-cover">
+              <img :src="book.cover" @error="onImgErr($event)" alt="">
+              <div class="cover-fallback"><span x-text="book.title"></span></div>
+              <div class="progress-bar" x-show="book.readingProgress > 0">
+                <div class="progress-fill" :style="`width:${book.readingProgress}%`"></div>
+              </div>
+            </div>
+            <p style="font-size:.7rem; margin-top:.5rem; line-height:1.4; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; color:var(--sub);" x-text="book.title"></p>
+          </div>
+        </template>
+      </div>
+    </div>
+
+    <!-- 笔记最多的书 -->
+    <div class="mb-14" x-show="notebooks.length > 0">
+      <div style="font-family:'Fraunces',serif; font-size:1.1rem; color:var(--sub); letter-spacing:.04em; margin-bottom:1.25rem; display:flex; align-items:center; gap:.75rem;">
+        划线最多
+        <span style="flex:1; height:1px; background:var(--border); display:block;"></span>
+      </div>
+      <div>
+        <template x-for="nb in topNotes" :key="nb.bookId">
+          <div class="nb-row" @click="openBook({...nb.book, readingProgress: nb.readingProgress||0})">
+            <div class="book-cover" style="width:36px; height:54px; flex-shrink:0;">
+              <img :src="nb.book?.cover" @error="onImgErr($event)" alt="">
+              <div class="cover-fallback"><span x-text="nb.book?.title"></span></div>
+            </div>
+            <div style="flex:1; min-width:0;">
+              <p style="font-size:.875rem; font-family:'Fraunces',serif; line-height:1.35;" x-text="nb.book?.title"></p>
+              <p style="font-size:.72rem; color:var(--dim); margin-top:.2rem;" x-text="nb.book?.author"></p>
+            </div>
+            <div style="text-align:right; flex-shrink:0;">
+              <span style="font-family:'Fraunces',serif; font-style:italic; font-size:1.875rem; color:var(--accent);" x-text="nb.noteCount + nb.reviewCount"></span>
+              <span style="font-size:.65rem; color:var(--dim); display:block;">条</span>
+            </div>
+          </div>
+        </template>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ TAB: 书架 ══ -->
+<div x-show="!loading && !loadError && tab==='shelf'" class="fu container" style="padding-top:2rem; padding-bottom:4rem;">
+  <!-- 分类筛选 -->
+  <div style="display:flex; gap:.5rem; flex-wrap:wrap; margin-bottom:2rem;">
+    <button class="chip" :class="{active: filter==='all'}" @click="filter='all'">
+      全部 <span style="opacity:.6;" x-text="`(${shelf.length})`"></span>
+    </button>
+    <template x-for="cat in categories" :key="cat">
+      <button class="chip" :class="{active: filter===cat}" @click="filter=cat" x-text="cat"></button>
+    </template>
+  </div>
+
+  <!-- 书格 -->
+  <div class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-7 gap-x-5 gap-y-8">
+    <template x-for="book in filteredShelf" :key="book.bookId">
+      <div class="book-card" @click="openBook(book)">
+        <div class="book-cover">
+          <img :src="book.cover" @error="onImgErr($event)" alt="">
+          <div class="cover-fallback"><span x-text="book.title"></span></div>
+          <div class="progress-bar" x-show="book.readingProgress > 0">
+            <div class="progress-fill" :style="`width:${book.readingProgress}%`"></div>
+          </div>
+          <div x-show="book.finishReading===1" style="position:absolute; top:6px; right:6px;">
+            <span class="badge badge-done">读完</span>
+          </div>
+          <div x-show="book.secret===1" style="position:absolute; top:6px; left:6px;">
+            <span class="badge badge-priv">🔒</span>
+          </div>
+        </div>
+        <p style="font-size:.72rem; margin-top:.5rem; line-height:1.45; font-family:'Fraunces',serif; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;" x-text="book.title"></p>
+        <p style="font-size:.65rem; color:var(--dim); margin-top:.2rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" x-text="book.author"></p>
+      </div>
+    </template>
+  </div>
+  <div x-show="filteredShelf.length===0" class="empty">这个分类下暂无书籍</div>
+</div>
+
+<!-- ══ TAB: 笔记 ══ -->
+<div x-show="!loading && !loadError && tab==='notes'" class="fu container" style="padding-top:2rem; padding-bottom:4rem;">
+
+  <!-- 顶栏：统计 + 视图切换 -->
+  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem;">
+    <span style="font-family:'Fraunces',serif; font-style:italic; font-size:1.1rem; color:var(--sub);">
+      共 <span style="color:var(--accent);" x-text="notebooks.length"></span> 本有笔记
+      <span style="font-size:.78rem; color:var(--dim); margin-left:.5rem;" x-text="`· ${totalNotes} 条`"></span>
+    </span>
+    <div class="view-toggle">
+      <button class="view-btn" :class="{active: notesView==='list'}" @click="notesView='list'; stopSpotlight()">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+        列表
+      </button>
+      <button class="view-btn" :class="{active: notesView==='cards'}" @click="switchToCards()">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+        碎片
+      </button>
+    </div>
+  </div>
+
+  <!-- ── 列表视图 ── -->
+  <div x-show="notesView==='list'">
+    <div x-show="notebooks.length===0" class="empty">暂无笔记数据</div>
+    <template x-for="nb in notebooks" :key="nb.bookId">
+      <div class="nb-row" @click="openBook({...nb.book, readingProgress: nb.readingProgress||0})">
+        <div class="book-cover" style="width:44px; height:66px; flex-shrink:0;">
+          <img :src="nb.book?.cover" @error="onImgErr($event)" alt="">
+          <div class="cover-fallback"><span x-text="nb.book?.title"></span></div>
+        </div>
+        <div style="flex:1; min-width:0;">
+          <p style="font-family:'Fraunces',serif; font-size:.9rem; line-height:1.4;" x-text="nb.book?.title"></p>
+          <p style="font-size:.72rem; color:var(--dim); margin-top:.25rem;" x-text="nb.book?.author"></p>
+          <div style="display:flex; gap:1rem; margin-top:.5rem;">
+            <span style="font-size:.72rem; color:var(--sub);" x-show="nb.noteCount > 0">
+              <span x-text="nb.noteCount"></span> 划线
+            </span>
+            <span style="font-size:.72rem; color:var(--sub);" x-show="nb.reviewCount > 0">
+              <span x-text="nb.reviewCount"></span> 想法
+            </span>
+          </div>
+        </div>
+        <div style="text-align:right; flex-shrink:0; padding-left:.5rem;">
+          <div style="font-family:'Fraunces',serif; font-style:italic; font-size:2.5rem; line-height:1; color:var(--accent);" x-text="nb.noteCount + nb.reviewCount"></div>
+          <div style="font-size:.65rem; color:var(--dim); margin-top:.2rem;">条笔记</div>
+        </div>
+      </div>
+    </template>
+  </div>
+
+  <!-- ── 碎片视图 ── -->
+  <div x-show="notesView==='cards'">
+
+    <!-- 加载中骨架 -->
+    <div x-show="loadingCards" class="card-wall">
+      <template x-for="i in 12">
+        <div style="break-inside:avoid; margin-bottom:1.125rem;">
+          <div class="skel" :style="`height:${60 + (i*23)%80}px; border-radius:8px;`"></div>
+        </div>
+      </template>
+    </div>
+
+    <!-- 卡片墙 -->
+    <div x-show="!loadingCards" class="card-wall">
+      <template x-for="card in allCards" :key="card.id">
+        <div class="card-float-wrap"
+             :class="{'has-bubble': activeBubbles[card.id]}"
+             :style="cardFloatStyle(card.id)">
+          <template x-if="activeBubbles[card.id]">
+            <div class="card-bubble"
+                 :style="`font-size:${activeBubbles[card.id].size}`"
+                 x-text="activeBubbles[card.id].text"></div>
+          </template>
+          <div class="note-card" @click="openCardFlip(card)"
+               :class="{'is-thought': card.type === 'rv'}"
+               :style="`--rot:${cardRotation(card.id)}deg; --tx:${cardJitter(card.id)}px`">
+            <!-- 书色顶线 -->
+            <div class="note-card-line" :style="`background:${bookHue(card.book.bookId)}`"></div>
+            <!-- 想法引用原文（若有） -->
+            <template x-if="card.type === 'rv' && card.abstract">
+              <p class="card-abstract" x-text="`「${card.abstract}」`"></p>
+            </template>
+            <!-- 正文，字号随长度自适应 -->
+            <p class="card-text" x-text="card.text"
+               :style="`font-size:${cardFontSize(card.text.length)}`"></p>
+            <!-- hover 显示的书籍信息 -->
+            <div class="card-meta">
+              <div class="card-meta-title" x-text="card.book.title"></div>
+              <div class="card-meta-sub" x-text="`${card.chapterTitle}  ·  ${fmt.date(card.createTime)}`"></div>
+            </div>
+          </div>
+        </div>
+      </template>
+      <div x-show="allCards.length===0 && !loadingCards" class="empty" style="column-span:all;">
+        还没有任何划线
+      </div>
+    </div>
+
+  </div>
+
+</div>
+
+<!-- ══ TAB: 搜索 ══ -->
+<div x-show="!loading && !loadError && tab==='search'" class="fu container" style="padding-top:3rem; padding-bottom:4rem;">
+  <div style="position:relative; margin-bottom:2.5rem;">
+    <input type="text" x-model="q" @keyup.enter="doSearch()" placeholder="在书城中搜索书名或作者…" class="search-box">
+    <button @click="doSearch()" style="position:absolute; right:1rem; top:50%; transform:translateY(-50%); color:var(--dim); background:none; border:none; cursor:pointer; padding:.25rem; transition:color .2s;" onmouseover="this.style.color='var(--accent)'" onmouseout="this.style.color='var(--dim)'">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+    </button>
+  </div>
+
+  <div x-show="searching" style="text-align:center; padding:2rem; color:var(--dim); font-family:'Fraunces',serif; font-style:italic;">搜索中…</div>
+
+  <div x-show="!searching && results.length===0 && q.trim()" class="empty">未找到「<span x-text="q"></span>」相关书籍</div>
+
+  <div x-show="!searching && !q.trim() && results.length===0" class="empty" style="padding-top:3rem;">
+    输入书名或作者名开始搜索
+  </div>
+
+  <div class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-7 gap-x-5 gap-y-8">
+    <template x-for="book in results" :key="book.bookId">
+      <div class="book-card" @click="openBook(book)">
+        <div class="book-cover">
+          <img :src="book.cover" @error="onImgErr($event)" alt="">
+          <div class="cover-fallback"><span x-text="book.title"></span></div>
+        </div>
+        <p style="font-size:.72rem; margin-top:.5rem; line-height:1.45; font-family:'Fraunces',serif; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;" x-text="book.title"></p>
+        <p style="font-size:.65rem; color:var(--dim); margin-top:.2rem;" x-text="book.author"></p>
+        <div x-show="book.newRating" class="rating" style="margin-top:.3rem;" x-text="`★ ${book.newRating?.toFixed(1)}`"></div>
+      </div>
+    </template>
+  </div>
+</div>
+
+</main>
+
+<!-- ══════════ DRAWER MASK ══════════ -->
+<div class="drawer-mask" :class="{open: drawerOpen}" @click="closeDrawer()"></div>
+
+<!-- ══════════ DRAWER ══════════ -->
+<div class="drawer" :class="{open: drawerOpen}" style="padding:1.75rem;">
+
+  <!-- 关闭 -->
+  <button @click="closeDrawer()" style="position:absolute; top:1rem; right:1rem; width:32px; height:32px; display:flex; align-items:center; justify-content:center; border-radius:6px; border:1px solid var(--border); background:transparent; cursor:pointer; color:var(--dim); transition:all .2s;" onmouseover="this.style.color='var(--text)'; this.style.borderColor='var(--text)'" onmouseout="this.style.color='var(--dim)'; this.style.borderColor='var(--border)'">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+  </button>
+
+  <div x-show="activeBook" style="padding-top:.5rem;">
+    <!-- 书籍信息 -->
+    <div style="display:flex; gap:1.125rem; margin-bottom:1.5rem;">
+      <div class="book-cover"
+           :style="`width:72px;height:108px;flex-shrink:0;background-image:url('${activeBook?.cover||''}');background-size:cover;background-position:center`">
+      </div>
+      <div style="flex:1; min-width:0; padding-top:.25rem;">
+        <h2 style="font-family:'Fraunces',serif; font-size:1.125rem; line-height:1.35; margin:0 0 .3rem;" x-text="activeBook?.title"></h2>
+        <p style="font-size:.8rem; color:var(--sub); margin:0 0 .875rem;" x-text="activeBook?.author"></p>
+        <div x-show="(activeBook?.readingProgress || 0) > 0" style="margin-bottom:.75rem;">
+          <div style="display:flex; justify-content:space-between; font-size:.68rem; color:var(--dim); margin-bottom:.35rem;">
+            <span>阅读进度</span>
+            <span x-text="`${activeBook?.readingProgress || 0}%`"></span>
+          </div>
+          <div class="read-prog-track">
+            <div class="read-prog-fill" :style="`width:${activeBook?.readingProgress||0}%`"></div>
+          </div>
+        </div>
+        <a :href="`weread://reading?bId=${activeBook?.bookId}`"
+           style="display:inline-flex; align-items:center; gap:.35rem; font-size:.75rem; color:var(--accent); padding:.3rem .75rem; border:1px solid var(--accent-bg); border-radius:5px; background:var(--accent-bg); transition:all .2s;"
+           onmouseover="this.style.background='var(--accent)'; this.style.color='#fff'"
+           onmouseout="this.style.background='var(--accent-bg)'; this.style.color='var(--accent)'">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15,3 21,3 21,9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+          在 App 中打开
+        </a>
+      </div>
+    </div>
+
+    <!-- 书籍简介 + 元数据 -->
+    <div x-show="activeBook?.intro || activeBook?.newRating || activeBook?.wordCount"
+         style="margin-bottom:1.25rem; padding-bottom:1.25rem; border-bottom:1px solid var(--border);">
+      <!-- 评分 / 字数 / 出版社 -->
+      <div style="display:flex; flex-wrap:wrap; gap:.75rem; margin-bottom:.75rem;">
+        <span x-show="activeBook?.newRating"
+              style="font-size:.75rem; color:var(--accent);">
+          ★ <span x-text="activeBook?.newRating?.toFixed(1)"></span>
+        </span>
+        <span x-show="activeBook?.wordCount"
+              style="font-size:.75rem; color:var(--dim);">
+          <span x-text="Math.round((activeBook?.wordCount||0)/10000)"></span> 万字
+        </span>
+        <span x-show="activeBook?.publisher"
+              style="font-size:.75rem; color:var(--dim);" x-text="activeBook?.publisher"></span>
+        <span x-show="activeBook?.translator"
+              style="font-size:.75rem; color:var(--dim);"
+              x-text="`译：${activeBook?.translator}`"></span>
+      </div>
+      <!-- 简介 -->
+      <p x-show="activeBook?.intro"
+         style="font-size:.82rem; color:var(--sub); line-height:1.75;
+                display:-webkit-box; -webkit-line-clamp:5; -webkit-box-orient:vertical; overflow:hidden;"
+         x-text="activeBook?.intro"></p>
+    </div>
+
+    <!-- 抽屉内 tab -->
+    <div style="display:flex; gap:1.5rem; border-bottom:1px solid var(--border); margin-bottom:1.25rem;">
+      <button class="dtab" :class="{active: dtab==='hl'}" @click="dtab='hl'">
+        划线 <span style="font-size:.65rem; color:var(--dim); margin-left:.25rem;" x-text="highlights.length > 0 ? `(${highlights.length})` : ''"></span>
+      </button>
+      <button class="dtab" :class="{active: dtab==='rv'}" @click="dtab='rv'">
+        想法 <span style="font-size:.65rem; color:var(--dim); margin-left:.25rem;" x-text="thoughts.length > 0 ? `(${thoughts.length})` : ''"></span>
+      </button>
+    </div>
+
+    <!-- 加载中 -->
+    <div x-show="drawerLoading" style="padding:2rem 0;">
+      <div class="skel" style="height:4rem; border-radius:6px; margin-bottom:1rem;"></div>
+      <div class="skel" style="height:4rem; border-radius:6px; margin-bottom:1rem;"></div>
+      <div class="skel" style="height:4rem; border-radius:6px;"></div>
+    </div>
+
+    <!-- 划线 -->
+    <div x-show="!drawerLoading && dtab==='hl'">
+      <div x-show="highlights.length===0" class="empty" style="padding:2.5rem 0;">这本书还没有划线</div>
+      <template x-for="group in groupedHighlights" :key="group.uid">
+        <div>
+          <div class="ch-divider"><span x-text="group.title"></span></div>
+          <div style="display:flex; flex-direction:column; gap:.875rem;">
+            <template x-for="h in group.items" :key="h.bookmarkId">
+              <blockquote class="hl-quote">
+                <p class="hl-text" x-text="h.markText"></p>
+                <a class="hl-meta" :href="`weread://bestbookmark?bookId=${h.bookId}&chapterUid=${h.chapterUid}&rangeStart=${h.range?.split('-')[0]}&rangeEnd=${h.range?.split('-')[1]}`"
+                   x-text="fmt.date(h.createTime)"></a>
+              </blockquote>
+            </template>
+          </div>
+        </div>
+      </template>
+    </div>
+
+    <!-- 想法 -->
+    <div x-show="!drawerLoading && dtab==='rv'">
+      <div x-show="thoughts.length===0" class="empty" style="padding:2.5rem 0;">这本书还没有想法</div>
+      <template x-for="rv in thoughts" :key="rv.review?.reviewId">
+        <div style="margin-bottom:1.25rem;">
+          <div x-show="rv.review?.abstract" style="font-size:.75rem; color:var(--dim); margin-bottom:.4rem; font-family:'Fraunces',serif; font-style:italic;"
+               x-text="`「${rv.review?.abstract}」`"></div>
+          <div class="thought" x-text="rv.review?.content"></div>
+          <span style="font-size:.68rem; color:var(--dim); margin-top:.35rem; display:block;" x-text="fmt.date(rv.review?.createTime)"></span>
+        </div>
+      </template>
+    </div>
+
+  </div>
+</div>
+
+<!-- ══════════ 卡片翻转详情弹窗 ══════════ -->
+<div x-show="showFlip"
+     x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
+     x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0"
+     style="transition:opacity .3s ease"
+     class="flip-overlay" @click="closeFlip()">
+
+  <div class="flip-scene" @click.stop="">
+    <div class="flip-card">
+
+      <!-- 书籍信息 -->
+      <div class="flip-header">
+        <div class="book-cover"
+             :style="`width:64px;height:96px;flex-shrink:0;background-image:url('${flipCard?.book?.cover||''}');background-size:cover;background-position:center`">
+        </div>
+        <div style="flex:1;min-width:0;">
+          <div class="flip-title"  x-text="flipCard?.book?.title"></div>
+          <div class="flip-author" x-text="flipCard?.book?.author"></div>
+          <div class="flip-chapter" x-text="flipCard?.chapterTitle"></div>
+          <div class="flip-badge" x-text="flipCard?.type === 'rv' ? '💭 想法' : '✏️ 划线'"></div>
+        </div>
+      </div>
+
+      <!-- 仅这一条内容 -->
+      <div class="flip-body">
+        <template x-if="flipCard?.type === 'rv' && flipCard?.abstract">
+          <p class="flip-body-abstract" x-text="`「${flipCard.abstract}」`"></p>
+        </template>
+        <p class="flip-body-quote"
+           :style="`font-size:${spotFontSize(flipCard?.text?.length ?? 80)}`"
+           x-text="flipCard?.text"></p>
+      </div>
+
+      <!-- 操作 -->
+      <div class="flip-footer">
+        <button class="flip-btn flip-btn-ghost" @click="closeFlip()">关闭</button>
+        <a class="flip-btn flip-btn-ghost"
+           :href="`weread://reading?bId=${flipCard?.book?.bookId}`"
+           @click="closeFlip()">在 App 中打开</a>
+        <button class="flip-btn flip-btn-solid" @click="closeFlip(); openBook(flipCard.book)">
+          查看全部划线
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════ SPOTLIGHT MODAL ══════════ -->
+<div x-show="showSpotModal"
+     x-transition:enter-start="opacity-0"
+     x-transition:enter-end="opacity-100"
+     x-transition:leave-start="opacity-100"
+     x-transition:leave-end="opacity-0"
+     style="transition:opacity .3s ease"
+     class="spot-overlay"
+     @click="dismissSpot()">
+
+  <div class="spot-card" :style="`--rot:${spotCard?.rot ?? 0}deg`"
+       @click.stop="dismissSpot(); openBook(spotCard.book)"
+       @mouseenter="pauseSpot()" @mouseleave="resumeSpot()"
+       style="cursor:pointer">
+    <div class="spot-bubble" x-text="spotCard?.upPhrase"></div>
+    <div class="spot-topline" :style="`background:${spotCard?.color ?? 'var(--accent)'}`"></div>
+    <div class="spot-deco">"</div>
+    <!-- 想法引用原文 -->
+    <template x-if="spotCard?.type === 'rv' && spotCard?.abstract">
+      <p class="spot-abstract" x-text="`「${spotCard.abstract}」`"></p>
+    </template>
+    <p class="spot-text"
+       :style="`font-size:${spotFontSize(spotCard?.text?.length ?? 80)}`"
+       x-text="spotCard?.text"></p>
+    <div class="spot-footer">
+      <div>
+        <div class="spot-book" x-text="spotCard?.book?.title"></div>
+        <div class="spot-ch"   x-text="spotCard?.chapterTitle"></div>
+      </div>
+      <div class="spot-hint">点击卡片查看详情 · 点击其他处关闭</div>
+    </div>
+    <div class="spot-prog"></div>
+  </div>
+</div>
+
+<!-- ══════════ SCRIPT ══════════ -->
+<script>
+function weread() {
+  return {
+    theme: localStorage.getItem('wr-theme') || 'dark',
+    tab: 'overview',
+
+    // 数据
+    shelf: [],
+    stats: null,
+    notebooks: [],
+
+    // 状态
+    loading: true,
+    refreshing: false,
+    loadError: null,
+    filter: 'all',
+
+    // 抽屉
+    drawerOpen: false,
+    drawerLoading: false,
+    activeBook: null,
+    highlights: [],
+    chapters: [],
+    thoughts: [],
+    dtab: 'hl',
+
+    // 搜索
+    q: '',
+    results: [],
+    searching: false,
+
+    // 碎片视图
+    notesView: 'list',
+    allCards: [],
+    loadingCards: false,
+    cardsLoaded: false,
+    // 聚光灯
+    // 翻转弹窗
+    showFlip: false,
+    flipCard: null,
+    // 聚光灯
+    showSpotModal: false,
+    spotCard: null,
+    _spotTimer: null,
+    _spotDismissTimer: null,
+    _spotPaused: false,
+    _spotDuration: 3500,
+    _spotElapsed: 0,
+    _spotStartTime: 0,
+    // 排队气泡
+    activeBubbles: {},
+    _bubbleTimer: null,
+
+    // 缓存配置
+    CACHE_KEY: 'wr-data-v3',
+    CACHE_TTL: 24 * 60 * 60 * 1000,
+
+    // ── 初始化 ──
+    async boot() {
+      this.applyTheme()
+      this.tab = localStorage.getItem('wr-tab') || 'overview'
+      if (this.loadCache()) { this.loading = false; return }
+      await this._fetchAll()
+    },
+
+    async _fetchAll() {
+      this.loadError = null
+      try {
+        await Promise.all([this.loadShelf(), this.loadStats(), this.loadNotebooks()])
+        this.saveCache()
+      } catch (e) {
+        this.loadError = `加载失败：${e.message}`
+      } finally {
+        this.loading = false
+        this.refreshing = false
+      }
+    },
+
+    // ── 缓存 ──
+    loadCache() {
+      try {
+        const raw = localStorage.getItem(this.CACHE_KEY)
+        if (!raw) return false
+        const d = JSON.parse(raw)
+        if (Date.now() - (d.ts || 0) > this.CACHE_TTL) return false
+        this.shelf     = d.shelf     || []
+        this.stats     = d.stats     || null
+        this.notebooks = d.notebooks || []
+        if (d.allCards?.length) { this.allCards = d.allCards; this.cardsLoaded = true }
+        return true
+      } catch { return false }
+    },
+
+    saveCache() {
+      try {
+        localStorage.setItem(this.CACHE_KEY, JSON.stringify({
+          ts: Date.now(),
+          shelf: this.shelf, stats: this.stats,
+          notebooks: this.notebooks, allCards: this.allCards
+        }))
+      } catch (_) {}
+    },
+
+    async forceRefresh() {
+      if (this.refreshing) return
+      localStorage.removeItem(this.CACHE_KEY)
+      this.refreshing = true
+      this.loading = true
+      this.cardsLoaded = false
+      this.allCards = []
+      await this._fetchAll()
+      // 如果刷新时用户正在看碎片视图，自动重新加载卡片数据
+      if (this.tab === 'notes' && this.notesView === 'cards') {
+        await this.switchToCards()
+      }
+    },
+
+    // ── Tab（记忆当前页） ──
+    setTab(name) {
+      this.tab = name
+      localStorage.setItem('wr-tab', name)
+      if (name !== 'notes') this.stopSpotlight()
+    },
+
+    applyTheme() {
+      document.documentElement.className = this.theme
+    },
+
+    toggleTheme() {
+      this.theme = this.theme === 'dark' ? 'light' : 'dark'
+      localStorage.setItem('wr-theme', this.theme)
+      this.applyTheme()
+    },
+
+    // ── API 代理 ──
+    async api(body) {
+      const r = await fetch('/api/weread', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...body, skill_version: '1.0.3' })
+      })
+      if (!r.ok) throw new Error(`HTTP ${r.status}`)
+      const d = await r.json()
+      if (d.errcode && d.errcode !== 0) throw new Error(d.errmsg || `errcode ${d.errcode}`)
+      return d
+    },
+
+    // ── 数据加载 ──
+    async loadShelf() {
+      const d = await this.api({ api_name: '/shelf/sync' })
+      this.shelf = (d.books || []).sort((a, b) => b.readUpdateTime - a.readUpdateTime)
+    },
+
+    async loadStats() {
+      const d = await this.api({ api_name: '/readdata/detail', mode: 'annually' })
+      this.stats = d
+    },
+
+    async loadNotebooks() {
+      let all = [], lastSort = null
+      while (true) {
+        const body = { api_name: '/user/notebooks', count: 100 }
+        if (lastSort) body.lastSort = lastSort
+        const d = await this.api(body)
+        all = all.concat(d.books || [])
+        if (!d.hasMore) break
+        lastSort = all[all.length - 1].sort
+      }
+      this.notebooks = all.sort((a, b) =>
+        (b.noteCount + b.reviewCount) - (a.noteCount + a.reviewCount)
+      )
+    },
+
+    // ── 计算属性 ──
+    get recentShelf() {
+      return this.shelf.slice(0, 10)
+    },
+
+    get topNotes() {
+      return this.notebooks.slice(0, 5)
+    },
+
+    get totalNotes() {
+      return this.notebooks.reduce((s, nb) => s + nb.noteCount + nb.reviewCount, 0)
+    },
+
+    get categories() {
+      const s = new Set(
+        this.shelf.map(b => b.category?.split('-')[0]).filter(Boolean)
+      )
+      return [...s]
+    },
+
+    get filteredShelf() {
+      if (this.filter === 'all') return this.shelf
+      return this.shelf.filter(b => b.category?.startsWith(this.filter))
+    },
+
+    get groupedHighlights() {
+      const chMap = new Map(this.chapters.map(c => [c.chapterUid, c]))
+      const grouped = new Map()
+      for (const h of this.highlights) {
+        const uid = h.chapterUid
+        if (!grouped.has(uid)) {
+          grouped.set(uid, {
+            uid,
+            title: chMap.get(uid)?.title || `第${uid}章`,
+            items: []
+          })
+        }
+        grouped.get(uid).items.push(h)
+      }
+      return [...grouped.values()].sort((a, b) => a.uid - b.uid)
+    },
+
+    // ── 碎片视图 ──
+    async switchToCards() {
+      this.notesView = 'cards'
+      if (this.cardsLoaded) { this.startSpotlight(); return }
+      this.loadingCards = true
+
+      const booksWithHL = this.notebooks.filter(nb => nb.noteCount > 0)
+      const booksWithRV = this.notebooks.filter(nb => nb.reviewCount > 0)
+
+      // 从 shelf 补全封面（shelf 封面最稳定）
+      const shelfMap = new Map(this.shelf.map(b => [b.bookId, b.cover]))
+      const enrichBook = b => ({ ...b, cover: shelfMap.get(b.bookId) || b.cover || '' })
+
+      // 并发拉取划线和想法
+      const [hlRes, rvRes] = await Promise.all([
+        Promise.allSettled(
+          booksWithHL.map(nb =>
+            this.api({ api_name: '/book/bookmarklist', bookId: nb.bookId })
+              .then(d => ({ book: enrichBook(nb.book), updated: d.updated || [], chapters: d.chapters || [] }))
+          )
+        ),
+        Promise.allSettled(
+          booksWithRV.map(nb =>
+            this.api({ api_name: '/review/list/mine', bookid: nb.bookId, count: 100 })
+              .then(d => ({ book: enrichBook(nb.book), reviews: d.reviews || [] }))
+          )
+        )
+      ])
+
+      const cards = []
+
+      // 划线
+      for (const r of hlRes) {
+        if (r.status !== 'fulfilled') continue
+        const { book, updated, chapters } = r.value
+        const chMap = new Map(chapters.map(c => [c.chapterUid, c]))
+        for (const h of updated) {
+          cards.push({
+            id: h.bookmarkId,
+            text: h.markText,
+            createTime: h.createTime,
+            chapterTitle: chMap.get(h.chapterUid)?.title || '',
+            abstract: '',
+            book: { ...book },
+            type: 'hl'
+          })
+        }
+      }
+
+      // 想法/点评
+      for (const r of rvRes) {
+        if (r.status !== 'fulfilled') continue
+        const { book, reviews } = r.value
+        for (const rv of reviews) {
+          if (!rv.review?.content) continue
+          cards.push({
+            id: rv.review.reviewId,
+            text: rv.review.content,
+            createTime: rv.review.createTime,
+            chapterTitle: rv.review.chapterName || '',
+            abstract: rv.review.abstract || '',
+            book: { ...book },
+            type: 'rv'
+          })
+        }
+      }
+
+      cards.sort((a, b) => b.createTime - a.createTime)
+      this.allCards = cards
+      this.cardsLoaded = true
+      this.loadingCards = false
+      this.saveCache()
+      this.startSpotlight()
+    },
+
+    // ── 打开书籍 ──
+    async openBook(book) {
+      this.stopSpotlight()
+      const cover = book.cover || this.findCover(book.bookId) || ''
+      this.activeBook = { ...book, cover }
+      this.drawerOpen = true
+      this.drawerLoading = true
+      this.highlights = []
+      this.chapters = []
+      this.thoughts = []
+      this.dtab = 'hl'
+
+      try {
+        const [info, hl, rv] = await Promise.all([
+          this.api({ api_name: '/book/info', bookId: book.bookId }).catch(() => ({})),
+          this.api({ api_name: '/book/bookmarklist', bookId: book.bookId }),
+          this.api({ api_name: '/review/list/mine', bookid: book.bookId, count: 100 })
+        ])
+        // 用 book/info 补全简介、评分、字数等
+        this.activeBook = {
+          ...this.activeBook,
+          intro:       info.intro       || '',
+          newRating:   info.newRating   || 0,
+          wordCount:   info.wordCount   || 0,
+          publisher:   info.publisher   || '',
+          publishTime: info.publishTime || '',
+          translator:  info.translator  || '',
+        }
+        this.highlights = hl.updated || []
+        this.chapters   = hl.chapters || []
+        this.thoughts   = rv.reviews || []
+        if (this.highlights.length === 0 && this.thoughts.length > 0) this.dtab = 'rv'
+      } catch (_) { /* 无笔记属正常 */ }
+      finally { this.drawerLoading = false }
+    },
+
+    closeDrawer() {
+      this.drawerOpen = false
+      setTimeout(() => { this.activeBook = null }, 350)
+      // 关闭 2.5 秒后才重启，避免一关就立刻弹出
+      setTimeout(() => {
+        if (!this.drawerOpen && this.tab === 'notes' && this.notesView === 'cards') {
+          this.startSpotlight()
+        }
+      }, 2500)
+    },
+
+    // ── 搜索 ──
+    async doSearch() {
+      if (!this.q.trim()) return
+      this.searching = true
+      this.results = []
+      try {
+        const d = await this.api({
+          api_name: '/store/search', keyword: this.q, scope: 10, count: 24
+        })
+        this.results = (d.results || [])
+          .filter(r => r.bookInfo)
+          .map(r => r.bookInfo)
+      } catch (_) {}
+      finally { this.searching = false }
+    },
+
+    // ── 格式化 ──
+    fmt: {
+      hours(s) {
+        return Math.round((s || 0) / 3600)
+      },
+      date(ts) {
+        if (!ts) return ''
+        const d = new Date(ts * 1000)
+        return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`
+      },
+      time(s) {
+        const h = Math.floor((s||0)/3600), m = Math.floor(((s||0)%3600)/60)
+        return h > 0 ? (m > 0 ? `${h}h ${m}m` : `${h}h`) : `${m}分钟`
+      }
+    },
+
+    // ── 书封查找（从 shelf / notebooks 回退） ──
+    findCover(bookId) {
+      if (!bookId) return ''
+      return this.shelf.find(b => b.bookId === bookId)?.cover
+          || this.notebooks.find(n => n.bookId === bookId)?.book?.cover
+          || ''
+    },
+
+    // ── 碎片卡片辅助 ──
+    // ── 翻转弹窗 ──
+    openCardFlip(card) {
+      const cover = this.findCover(card.book?.bookId) || card.book?.cover || ''
+      this.flipCard = { ...card, color: this.bookHue(card.book.bookId), book: { ...card.book, cover } }
+      this.showFlip = true
+      this.stopSpotlight()
+    },
+
+    closeFlip() {
+      this.showFlip = false
+      setTimeout(() => { this.flipCard = null }, 350)
+      setTimeout(() => {
+        if (!this.showFlip && !this.drawerOpen && this.tab === 'notes' && this.notesView === 'cards') {
+          this.startSpotlight()
+        }
+      }, 2500)
+    },
+
+    // ── 聚光灯 ──
+    startSpotlight() {
+      if (this._spotTimer || !this.allCards.length) return
+      this._scheduleNext()
+      this.startBubbles()
+    },
+
+    _scheduleNext() {
+      const delay = 3500 + Math.random() * 4500
+      this._spotTimer = setTimeout(() => this._triggerSpot(), delay)
+    },
+
+    _triggerSpot() {
+      if (!this.allCards.length || this.drawerOpen || this.showFlip || this.tab !== 'notes' || this.notesView !== 'cards') return
+      const card = this.allCards[Math.floor(Math.random() * this.allCards.length)]
+      const ups = [
+        '🎉 终于轮到我了！', '🎉 哈哈，我上来了！', '🎉 大家快来看我～',
+        '🎉 我准备好了！', '🎉 嘿嘿，选中了！', '🎉 我的时刻到了！',
+        '🎉 感谢选择我～', '🎉 太好了太好了！', '🎉 我来啦！',
+        '🎉 冲冲冲！上台了！', '🎉 看好了，精彩的来了', '🎉 嗨，是我！',
+        '🎉 期待已久！', '🎉 请多关注我！', '🎉 我的高光时刻～',
+        '🎉 不枉等了这么久', '🎉 好好看我吧！', '🎉 压轴出场！',
+      ]
+      this.spotCard = {
+        ...card,
+        rot: this.cardRotation(card.id) * 0.5,
+        color: this.bookHue(card.book.bookId),
+        upPhrase: ups[Math.floor(Math.random() * ups.length)]
+      }
+      this.showSpotModal = true
+      this._spotPaused = false
+      this._spotDuration = 3500
+      this._spotElapsed = 0
+      this._spotStartTime = Date.now()
+      this._startDismissTimer(this._spotDuration)
+    },
+
+    _startDismissTimer(ms) {
+      clearTimeout(this._spotDismissTimer)
+      this._spotDismissTimer = setTimeout(() => this.dismissSpot(), ms)
+    },
+
+    pauseSpot() {
+      if (!this.showSpotModal || this._spotPaused) return
+      this._spotPaused = true
+      this._spotElapsed += Date.now() - this._spotStartTime  // 累计已过时间
+      clearTimeout(this._spotDismissTimer)
+      const prog = document.querySelector('.spot-prog')
+      if (prog) prog.style.animationPlayState = 'paused'
+    },
+
+    resumeSpot() {
+      if (!this.showSpotModal || !this._spotPaused) return
+      this._spotPaused = false
+      this._spotStartTime = Date.now()
+      const remaining = Math.max(200, this._spotDuration - this._spotElapsed)
+      const prog = document.querySelector('.spot-prog')
+      if (prog) prog.style.animationPlayState = 'running'
+      this._startDismissTimer(remaining)  // 按剩余时间关闭，与进度条同步
+    },
+
+    dismissSpot() {
+      clearTimeout(this._spotDismissTimer)
+      this.showSpotModal = false
+      this._spotTimer = null
+      this._spotPaused = false
+      setTimeout(() => {
+        this.spotCard = null
+        if (!this.drawerOpen) this._scheduleNext()  // 抽屉打开时不重启
+      }, 350)
+    },
+
+    stopSpotlight() {
+      clearTimeout(this._spotTimer)
+      clearTimeout(this._spotDismissTimer)
+      this._spotTimer = null
+      this._spotPaused = false
+      this.showSpotModal = false
+      this.spotCard = null
+      this.stopBubbles()
+    },
+
+    // ── 排队气泡 ──
+    startBubbles() {
+      if (this._bubbleTimer || !this.allCards.length) return
+      this._scheduleBubble()
+    },
+
+    _scheduleBubble() {
+      const delay = 600 + Math.random() * 1000   // 0.6 ~ 1.6 秒
+      this._bubbleTimer = setTimeout(() => {
+        this._popBubble()
+        this._scheduleBubble()
+      }, delay)
+    },
+
+    _popBubble() {
+      if (this.drawerOpen || this.showFlip) return
+      if (Object.keys(this.activeBubbles).length >= 10) return
+      const lines = [
+        '💭 是不是该我了？', '💭 等不及了！', '💭 选我选我！',
+        '💭 我也想上去', '💭 快到我了吧？', '💭 已经等很久了…',
+        '💭 这次换我！', '💭 轮到我了吗？', '💭 我有好内容！',
+        '💭 喂！注意我！', '💭 我也很精彩的', '💭 快点快点～',
+        '💭 我最重要！', '💭 上次没选我…', '💭 这次一定是我',
+        '💭 我在这里呢～', '💭 看我看我！', '💭 我也有话说',
+        '💭 你看看我嘛', '💭 我都准备好了', '💭 忘了我了？',
+        '💭 再不选我我生气了', '💭 给我一次机会', '💭 我呢我呢？',
+        '💭 哎，怎么还没到我', '💭 已经排了好久了', '💭 我比较重要的',
+        '💭 嗯哼～看这里！', '💭 悄悄告诉你我很好看', '💭 我憋了好久了',
+        '💭 咳咳，注意到我了吗', '💭 选我准没错！', '💭 在吗？轮我了吗？',
+        '💭 喏，这里有我呢', '💭 我闪闪发光的！', '💭 看到我没有啊',
+        '💭 就是我就是我！', '💭 快快快，看我！', '💭 我排了好久的队！',
+      ]
+      // 字体随机：0.7rem ~ 2.5rem，有大有小，明显有层次
+      const sizes = ['0.7rem','0.8rem','0.9rem','1rem','1.1rem','1.3rem','1.6rem','2rem','2.5rem']
+      const available = this.allCards.filter(c =>
+        !this.activeBubbles[c.id] && c.id !== this.spotCard?.id
+      )
+      if (!available.length) return
+      const card = available[Math.floor(Math.random() * available.length)]
+      const text = lines[Math.floor(Math.random() * lines.length)]
+      const size = sizes[Math.floor(Math.random() * sizes.length)]
+      this.activeBubbles = { ...this.activeBubbles, [card.id]: { text, size } }
+      setTimeout(() => {
+        const next = { ...this.activeBubbles }
+        delete next[card.id]
+        this.activeBubbles = next
+      }, 3200)
+    },
+
+    stopBubbles() {
+      clearTimeout(this._bubbleTimer)
+      this._bubbleTimer = null
+      this.activeBubbles = {}
+    },
+
+    spotFontSize(len) {
+      if (len <= 20)  return '2rem'
+      if (len <= 45)  return '1.6rem'
+      if (len <= 90)  return '1.3rem'
+      if (len <= 180) return '1.1rem'
+      return '1rem'
+    },
+
+    cardFloatStyle(id) {
+      const h = (id || '').split('').reduce((s, c) => (s * 31 + c.charCodeAt(0)) | 0, 17)
+      const a = Math.abs(h)
+      const durs = [7.5, 8.4, 9.2, 10.1, 11.3, 12.6, 8.8, 9.9, 7.0, 11.8, 6.6, 13.2]
+      const dels = [0, -1.8, -3.5, -5.2, -2.3, -4.7, -1.1, -4.0, -2.9, -0.6, -6.0, -3.2]
+      const fys  = [-4, -6, -5, -8, -3, -7, -5, -9, -4, -6, -3, -7]
+      const fzs  = [10, 16,  8, 20, 12, 18,  6, 22, 14,  9, 24, 11]
+      const frxs = [ 1.2, -1.8,  0.7, -2.2,  1.6, -0.9,  2.0, -1.4,  0.5, -2.5,  1.9, -0.6]
+      const frys = [-2.0,  1.5, -1.0,  2.5, -0.6,  2.2, -1.5,  0.8, -2.8,  1.2, -2.3,  0.4]
+      const i = a % durs.length
+      return `--dur:${durs[i]}s;--del:${dels[i]}s;--fy:${fys[i]}px;--fz:${fzs[i]}px;--frx:${frxs[i]}deg;--fry:${frys[i]}deg`
+    },
+
+    cardRotation(id) {
+      // ±4.5°，相邻卡片尽量角度差异大
+      const angles = [-4.4, -3.2, -2.1, -1.3, -0.5, 0.7, 1.6, 2.5, 3.8, 4.5, -3.8, 1.2, -2.7, 3.3, -1.8, 0.4, -4.0, 2.9, -0.9, 3.6]
+      const hash = (id || '').split('').reduce((s, c) => s + c.charCodeAt(0), 0)
+      return angles[hash % angles.length]
+    },
+
+    cardJitter(id) {
+      // 水平偏移 ±50px，让卡片大幅越过列边界、堆叠重叠
+      const offsets = [-50, -38, -27, -16, -7, 4, 13, 24, 35, 47, -44, 8, -31, 42, -20, 18, -46, 29, -11, 39]
+      const hash = (id || '').split('').reduce((s, c) => (s * 31 + c.charCodeAt(0)) | 0, 7)
+      return offsets[Math.abs(hash) % offsets.length]
+    },
+
+    cardFontSize(len) {
+      if (len <= 20)  return '1.5rem'
+      if (len <= 45)  return '1.2rem'
+      if (len <= 90)  return '1rem'
+      if (len <= 180) return '0.9rem'
+      return '0.825rem'
+    },
+
+    bookHue(bookId) {
+      // 用 bookId 哈希出暖色系色板，每本书固定对应一个颜色
+      const palette = [
+        '#C47B2E', '#B8602A', '#A0854A', '#8B6A3A',
+        '#C49050', '#9E6030', '#B07840', '#CC9060',
+        '#906040', '#D4A050',
+      ]
+      const hash = (bookId || '').split('').reduce((s, c) => s + c.charCodeAt(0), 0)
+      return palette[hash % palette.length]
+    },
+
+    // ── 图片加载失败 ──
+    onImgErr(e) {
+      e.target.style.display = 'none'
+      const fb = e.target.nextElementSibling
+      if (fb && fb.classList.contains('cover-fallback')) {
+        fb.classList.add('show')
+      }
+    }
+  }
+}
+</script>
+
+</body>
+</html>
